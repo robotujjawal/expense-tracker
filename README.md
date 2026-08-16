@@ -1,4 +1,21 @@
 # Ledger — Django + HTML/CSS/JS Expense Tracker
+# Expense Tracker
+
+A modern Django-based Expense Tracker application.
+
+## 🚀 Live Demo
+
+👉 [View Live Project](https://expense-tracker-p9lm.onrender.com)
+
+## 🛠️ Tech Stack
+
+- Python
+- Django
+- Django REST Framework
+- HTML
+- CSS
+- JavaScript
+- PostgreSQL
 
 A personal expense tracker with a Django REST API backend and a plain
 HTML/CSS/JS frontend (no framework, no build step). The UI is styled like
