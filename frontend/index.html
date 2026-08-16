@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ledger — Expense Tracker</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="6" width="20" height="13" rx="2.5"></rect>
+          <path d="M2 10h20"></path>
+          <circle cx="17" cy="14.5" r="1.4" fill="#fff" stroke="none"></circle>
+        </svg>
+      </span>
+      <div class="brand-text">
+        <h1>Ledger</h1>
+        <p>your money, kept in order</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <div class="topbar-date" id="todayDate">—</div>
+      <button id="loginBtn" aria-label="Log in" title="Log in">Log in</button>
+      <button id="themeToggle" aria-label="Toggle theme" title="Toggle theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.5A8.5 8.5 0 1 1 11.5 3a7 7 0 0 0 9.5 9.5Z"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===================== STAT ROW ===================== -->
+  <section class="stats-row" aria-label="Balance summary">
+    <div class="stat-card is-balance">
+      <div class="stat-head">
+        <span class="stat-label">Total balance</span>
+        <span class="stat-icon i-purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="6" width="20" height="13" rx="2.5"></rect>
+            <path d="M2 10h20"></path>
+          </svg>
+        </span>
+      </div>
+      <p class="stat-value mono" id="sumBalance">₹0.00</p>
+      <span class="stat-trend">Income minus expenses, all time</span>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-head">
+        <span class="stat-label">Total income</span>
+        <span class="stat-icon i-green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 19V5"></path><path d="m5 12 7-7 7 7"></path>
+          </svg>
+        </span>
+      </div>
+      <p class="stat-value mono" id="sumIncome">₹0.00</p>
+      <span class="stat-trend">Money in</span>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-head">
+        <span class="stat-label">Total expenses</span>
+        <span class="stat-icon i-red">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5v14"></path><path d="m5 12 7 7 7-7"></path>
+          </svg>
+        </span>
+      </div>
+      <p class="stat-value mono" id="sumExpense">₹0.00</p>
+      <span class="stat-trend">Money out</span>
+    </div>
+  </section>
+
+  <div class="layout">
+
+    <!-- ===================== SIDEBAR ===================== -->
+    <aside class="sidebar">
+
+      <!-- Add transaction form -->
+      <section class="ledger-form-card">
+        <h2>New entry</h2>
+        <form id="txForm">
+          <div class="type-toggle" role="radiogroup" aria-label="Transaction type">
+            <button type="button" class="type-btn is-active" data-type="expense">Expense</button>
+            <button type="button" class="type-btn" data-type="income">Income</button>
+          </div>
+          <input type="hidden" id="txType" value="expense">
+
+          <label class="field">
+            <span>Title</span>
+            <input type="text" id="txTitle" placeholder="e.g. Auto to office" required>
+          </label>
+
+          <label class="field">
+            <span>Amount (₹)</span>
+            <input type="number" id="txAmount" class="mono" placeholder="0.00" min="0.01" step="0.01" required>
+          </label>
+
+          <label class="field">
+            <span>Category</span>
+            <select id="txCategory"></select>
+          </label>
+
+          <label class="field">
+            <span>Date</span>
+            <input type="date" id="txDate" required>
+          </label>
+
+          <label class="field">
+            <span>Notes <em>(optional)</em></span>
+            <input type="text" id="txNotes" placeholder="Any detail worth remembering">
+          </label>
+
+          <button type="submit" class="submit-btn">Add to ledger</button>
+          <p class="form-msg" id="formMsg" role="status"></p>
+        </form>
+      </section>
+    </aside>
+
+    <!-- ===================== MAIN ===================== -->
+    <main class="main">
+
+      <!-- Category breakdown -->
+      <section class="card breakdown-card">
+        <div class="card-head">
+          <h2>Where it goes</h2>
+          <p>Expense breakdown by category</p>
+        </div>
+        <div class="breakdown-body">
+          <canvas id="breakdownChart" width="220" height="220"></canvas>
+          <ul class="breakdown-legend" id="breakdownLegend"></ul>
+        </div>
+      </section>
+
+      <!-- Ledger table -->
+      <section class="card ledger-card">
+        <div class="card-head ledger-head">
+          <div>
+            <h2>Transactions</h2>
+            <p>Every entry, dated and categorized</p>
+          </div>
+          <div class="ledger-tabs" id="filterTabs">
+            <button class="tab is-active" data-filter="all">All</button>
+            <button class="tab" data-filter="expense">Expenses</button>
+            <button class="tab" data-filter="income">Income</button>
+          </div>
+        </div>
+
+        <div class="ledger-search">
+          <input type="search" id="searchInput" placeholder="Search transactions…">
+        </div>
+
+        <div class="table-wrap">
+          <table class="ledger-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Category</th>
+                <th class="align-right">Amount</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="txTableBody">
+              <!-- rows injected by app.js -->
+            </tbody>
+          </table>
+          <p class="empty-state" id="emptyState" hidden>No entries yet — the first line of your ledger is waiting to be written.</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- Login panel (hidden by default) -->
+<div id="loginPanel" class="login-panel" hidden>
+  <div class="auth-shell" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="auth-tabs" role="tablist" aria-label="Auth tabs">
+      <button type="button" class="auth-tab is-active" data-mode="login" aria-selected="true">Sign in</button>
+      <button type="button" class="auth-tab" data-mode="signup" aria-selected="false">Sign up</button>
+    </div>
+
+    <form id="loginForm" class="login-form">
+      <h3 id="authTitle">Welcome back</h3>
+
+      <label class="field auth-field">
+        <span>Email</span>
+        <input type="email" id="loginEmail" placeholder="name@example.com" required />
+      </label>
+
+      <label id="fullnameField" class="field auth-field" style="display:none">
+        <span>Full name</span>
+        <input type="text" id="loginFullname" placeholder="Your full name" />
+      </label>
+
+      <label class="field auth-field">
+        <span>Password</span>
+        <div class="password-field">
+          <input type="password" id="loginPassword" placeholder="Enter your password" required />
+          <button type="button" id="togglePassword" class="password-toggle" aria-label="Show password" title="Show password">Show</button>
+        </div>
+      </label>
+
+      <label id="confirmPasswordField" class="field auth-field" style="display:none">
+        <span>Confirm password</span>
+        <div class="password-field">
+          <input type="password" id="confirmPassword" placeholder="Repeat your password" />
+        </div>
+      </label>
+
+      <div class="auth-row">
+        <label class="remember-me">
+          <input type="checkbox" id="rememberMe" />
+          <span>Remember me</span>
+        </label>
+        <button type="button" class="text-link">Forgot password?</button>
+      </div>
+
+      <button type="submit" class="submit-btn auth-submit" id="authSubmit">Sign in</button>
+      <button type="button" id="loginCancel" class="ghost-btn">Close</button>
+
+      <div class="auth-switch">
+        <span id="authSwitchText">Don't have an account?</span>
+        <button type="button" id="switchAuthMode" class="text-link">Sign up</button>
+      </div>
+
+      <p id="loginMsg" class="form-msg" role="status"></p>
+    </form>
+  </div>
+</div>
+
+<template id="rowTemplate">
+  <tr>
+    <td class="mono cell-date"></td>
+    <td class="cell-title">
+      <span class="cell-icon"></span>
+      <span class="cell-title-text"></span>
+      <div class="cell-notes"></div>
+    </td>
+    <td><span class="badge"></span></td>
+    <td class="align-right mono cell-amount"></td>
+    <td class="align-right">
+      <button class="delete-btn" title="Delete entry" aria-label="Delete entry">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+        </svg>
+      </button>
+    </td>
+  </tr>
+</template>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
